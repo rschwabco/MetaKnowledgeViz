@@ -1,5 +1,5 @@
 // Meta-Knowledge Visualization — Excalidraw scene data
-// This builds the full diagram programmatically.
+// Focused on visualizing the concept of APPLICABILITY
 
 let nextId = 1;
 const id = () => String(nextId++);
@@ -10,10 +10,7 @@ function rect(x, y, w, h, opts = {}) {
   return {
     id: id(),
     type: "rectangle",
-    x,
-    y,
-    width: w,
-    height: h,
+    x, y, width: w, height: h,
     strokeColor: opts.strokeColor || "#1e1e1e",
     backgroundColor: opts.bg || "transparent",
     fillStyle: opts.fillStyle || "solid",
@@ -31,10 +28,7 @@ function ellipse(x, y, w, h, opts = {}) {
   return {
     id: id(),
     type: "ellipse",
-    x,
-    y,
-    width: w,
-    height: h,
+    x, y, width: w, height: h,
     strokeColor: opts.strokeColor || "#1e1e1e",
     backgroundColor: opts.bg || "transparent",
     fillStyle: opts.fillStyle || "solid",
@@ -52,8 +46,7 @@ function text(x, y, content, opts = {}) {
   return {
     id: id(),
     type: "text",
-    x,
-    y,
+    x, y,
     width: opts.width || content.length * 9,
     height: opts.height || 25,
     text: content,
@@ -76,8 +69,7 @@ function arrow(x, y, points, opts = {}) {
   return {
     id: id(),
     type: "arrow",
-    x,
-    y,
+    x, y,
     width: Math.abs(points[points.length - 1][0] - points[0][0]),
     height: Math.abs(points[points.length - 1][1] - points[0][1]),
     points,
@@ -96,14 +88,32 @@ function arrow(x, y, points, opts = {}) {
   };
 }
 
+function line(x, y, points, opts = {}) {
+  return {
+    id: id(),
+    type: "line",
+    x, y,
+    width: Math.abs(points[points.length - 1][0] - points[0][0]),
+    height: Math.abs(points[points.length - 1][1] - points[0][1]),
+    points,
+    strokeColor: opts.strokeColor || "#1e1e1e",
+    backgroundColor: "transparent",
+    fillStyle: "solid",
+    strokeWidth: opts.strokeWidth || 2,
+    roundness: null,
+    opacity: opts.opacity || 100,
+    groupIds: opts.groupIds || [],
+    boundElements: [],
+    locked: false,
+    ...opts.extra,
+  };
+}
+
 function diamond(x, y, w, h, opts = {}) {
   return {
     id: id(),
     type: "diamond",
-    x,
-    y,
-    width: w,
-    height: h,
+    x, y, width: w, height: h,
     strokeColor: opts.strokeColor || "#1e1e1e",
     backgroundColor: opts.bg || "transparent",
     fillStyle: opts.fillStyle || "solid",
@@ -123,319 +133,439 @@ export function buildScene() {
   const elements = [];
 
   // =====================================================================
-  //  TITLE
+  //  TITLE (top-center)
   // =====================================================================
   elements.push(
-    text(60, 30, "Meta-Knowledge: Why Retrieval Isn't Enough", {
-      fontSize: 36,
-      color: "#1971c2",
-      width: 800,
-      height: 45,
+    text(250, 20, "Similarity ≠ Applicability", {
+      fontSize: 40, color: "#1e1e1e", width: 600, height: 50,
+      textAlign: "center",
     })
   );
   elements.push(
-    text(60, 80, "Knowledge systems must understand WHEN and WHERE knowledge applies — not just what's semantically similar.", {
-      fontSize: 16,
-      color: "#868e96",
-      width: 900,
-      height: 22,
+    text(200, 75, "A document can be true, relevant, and semantically similar — and still be the wrong answer.", {
+      fontSize: 16, color: "#868e96", width: 700, height: 22, textAlign: "center",
     })
   );
 
   // =====================================================================
-  //  SECTION 1 — The Problem (left side)
+  //  SECTION 1 — The Venn Diagram of Applicability (left)
+  //  Shows that "Applicable" = intersection of 4 dimensions
   // =====================================================================
-  const s1x = 60, s1y = 140;
+  const vx = 80, vy = 140;
 
   elements.push(
-    text(s1x, s1y, "The Problem", {
-      fontSize: 28,
-      color: "#e03131",
-      width: 250,
-      height: 35,
+    text(vx + 50, vy, "What Makes Knowledge Applicable?", {
+      fontSize: 24, color: "#1971c2", width: 450, height: 32,
     })
   );
 
-  // Query box
-  elements.push(rect(s1x, s1y + 50, 420, 60, { bg: "#e7f5ff", strokeColor: "#1971c2" }));
+  // Big outer circle: "Semantically Similar" — the biggest set
   elements.push(
-    text(s1x + 15, s1y + 62, '🔍 Query: "What is our return policy?"', {
-      fontSize: 16,
-      color: "#1971c2",
-      width: 400,
-      height: 22,
-    })
-  );
-  elements.push(
-    text(s1x + 15, s1y + 82, "Context: Enterprise customer, B2B contract", {
-      fontSize: 14,
-      color: "#4dabf7",
-      width: 380,
-      height: 20,
-    })
-  );
-
-  // Arrow down
-  elements.push(arrow(s1x + 210, s1y + 110, [[0, 0], [0, 40]], { strokeColor: "#868e96" }));
-
-  // Naive RAG retrieval
-  elements.push(
-    text(s1x + 100, s1y + 155, "Naive RAG Retrieval", {
-      fontSize: 18,
-      color: "#868e96",
-      width: 220,
-      height: 24,
-    })
-  );
-
-  // Result cards
-  const cardsY = s1y + 190;
-
-  // Card 1 — wrong result
-  elements.push(rect(s1x, cardsY, 200, 100, { bg: "#fff5f5", strokeColor: "#e03131" }));
-  elements.push(text(s1x + 10, cardsY + 8, "Consumer Return Policy", { fontSize: 14, color: "#e03131", width: 180, height: 18 }));
-  elements.push(text(s1x + 10, cardsY + 30, "30-day return window", { fontSize: 12, color: "#495057", width: 180, height: 16 }));
-  elements.push(text(s1x + 10, cardsY + 48, "Similarity: 0.95 ✓", { fontSize: 12, color: "#2f9e44", width: 150, height: 16 }));
-  elements.push(text(s1x + 10, cardsY + 66, "Applicable: ✗ WRONG", { fontSize: 13, color: "#e03131", width: 180, height: 18 }));
-
-  // Card 2 — wrong result
-  elements.push(rect(s1x + 220, cardsY, 200, 100, { bg: "#fff5f5", strokeColor: "#e03131" }));
-  elements.push(text(s1x + 230, cardsY + 8, "General FAQ — Returns", { fontSize: 14, color: "#e03131", width: 180, height: 18 }));
-  elements.push(text(s1x + 230, cardsY + 30, "\"Simply ship it back...\"", { fontSize: 12, color: "#495057", width: 180, height: 16 }));
-  elements.push(text(s1x + 230, cardsY + 48, "Similarity: 0.91 ✓", { fontSize: 12, color: "#2f9e44", width: 150, height: 16 }));
-  elements.push(text(s1x + 230, cardsY + 66, "Applicable: ✗ WRONG", { fontSize: 13, color: "#e03131", width: 180, height: 18 }));
-
-  // Card 3 — correct
-  elements.push(rect(s1x + 60, cardsY + 120, 300, 100, { bg: "#ebfbee", strokeColor: "#2f9e44" }));
-  elements.push(text(s1x + 75, cardsY + 128, "Enterprise SLA — Returns", { fontSize: 14, color: "#2f9e44", width: 260, height: 18 }));
-  elements.push(text(s1x + 75, cardsY + 150, "90-day return, dedicated account mgr", { fontSize: 12, color: "#495057", width: 260, height: 16 }));
-  elements.push(text(s1x + 75, cardsY + 168, "Similarity: 0.82", { fontSize: 12, color: "#868e96", width: 150, height: 16 }));
-  elements.push(text(s1x + 75, cardsY + 186, "Applicable: ✓ CORRECT", { fontSize: 13, color: "#2f9e44", width: 200, height: 18 }));
-
-  // Verdict callout
-  elements.push(rect(s1x, cardsY + 240, 420, 60, { bg: "#fff3bf", strokeColor: "#f08c00" }));
-  elements.push(
-    text(s1x + 12, cardsY + 248, "⚠ Naive RAG ranks the WRONG docs higher.", {
-      fontSize: 14,
-      color: "#e8590c",
-      width: 400,
-      height: 18,
-    })
-  );
-  elements.push(
-    text(s1x + 12, cardsY + 270, "They are true & relevant — but not applicable to this user.", {
-      fontSize: 13,
-      color: "#e8590c",
-      width: 400,
-      height: 18,
-    })
-  );
-
-  // =====================================================================
-  //  SECTION 2 — Compatibility Envelope (center)
-  // =====================================================================
-  const s2x = 560, s2y = 140;
-
-  elements.push(
-    text(s2x + 80, s2y, "The Compatibility Envelope", {
-      fontSize: 28,
-      color: "#1971c2",
-      width: 400,
-      height: 35,
-    })
-  );
-
-  // Outer ring — red (disallowed truths)
-  elements.push(
-    ellipse(s2x, s2y + 55, 480, 480, {
-      bg: "#ffe3e3",
-      strokeColor: "#e03131",
-      fillStyle: "solid",
-      opacity: 40,
-    })
-  );
-  elements.push(
-    text(s2x + 10, s2y + 70, "Disallowed Truths", {
-      fontSize: 14,
-      color: "#e03131",
-      width: 160,
-      height: 18,
-    })
-  );
-
-  // Middle ring — yellow (partially applicable)
-  elements.push(
-    ellipse(s2x + 80, s2y + 135, 320, 320, {
-      bg: "#fff3bf",
-      strokeColor: "#f08c00",
-      fillStyle: "solid",
-      opacity: 50,
-    })
-  );
-  elements.push(
-    text(s2x + 95, s2y + 150, "Partially Applicable", {
-      fontSize: 14,
-      color: "#e8590c",
-      width: 170,
-      height: 18,
-    })
-  );
-
-  // Inner ring — green (fully applicable)
-  elements.push(
-    ellipse(s2x + 155, s2y + 210, 170, 170, {
-      bg: "#d3f9d8",
-      strokeColor: "#2f9e44",
-      fillStyle: "solid",
-      opacity: 60,
-    })
-  );
-  elements.push(
-    text(s2x + 177, s2y + 270, "Fully Applicable", {
-      fontSize: 14,
-      color: "#2f9e44",
-      width: 140,
-      height: 18,
-    })
-  );
-
-  // Documents floating in zones
-  // Inner — green
-  const docStyle = (bg, stroke) => ({ bg, strokeColor: stroke, fillStyle: "solid" });
-
-  elements.push(rect(s2x + 180, s2y + 240, 130, 35, docStyle("#b2f2bb", "#2f9e44")));
-  elements.push(text(s2x + 187, s2y + 248, "Enterprise SLA", { fontSize: 12, color: "#2b8a3e", width: 115, height: 16 }));
-
-  elements.push(rect(s2x + 185, s2y + 330, 120, 35, docStyle("#b2f2bb", "#2f9e44")));
-  elements.push(text(s2x + 192, s2y + 338, "Q1 2026 Pricing", { fontSize: 12, color: "#2b8a3e", width: 110, height: 16 }));
-
-  // Middle — yellow
-  elements.push(rect(s2x + 95, s2y + 180, 130, 35, docStyle("#ffec99", "#f08c00")));
-  elements.push(text(s2x + 102, s2y + 188, "2024 Annual Report", { fontSize: 12, color: "#e8590c", width: 120, height: 16 }));
-
-  elements.push(rect(s2x + 320, s2y + 350, 120, 35, docStyle("#ffec99", "#f08c00")));
-  elements.push(text(s2x + 327, s2y + 358, "Beta Feature Docs", { fontSize: 12, color: "#e8590c", width: 110, height: 16 }));
-
-  // Outer — red
-  elements.push(rect(s2x + 15, s2y + 400, 140, 35, docStyle("#ffc9c9", "#e03131")));
-  elements.push(text(s2x + 22, s2y + 408, "Consumer FAQ", { fontSize: 12, color: "#c92a2a", width: 125, height: 16 }));
-
-  elements.push(rect(s2x + 350, s2y + 130, 120, 35, docStyle("#ffc9c9", "#e03131")));
-  elements.push(text(s2x + 357, s2y + 138, "Competitor Analysis", { fontSize: 12, color: "#c92a2a", width: 115, height: 16 }));
-
-  elements.push(rect(s2x + 350, s2y + 460, 120, 35, docStyle("#ffc9c9", "#e03131")));
-  elements.push(text(s2x + 357, s2y + 468, "Industry Blog", { fontSize: 12, color: "#c92a2a", width: 105, height: 16 }));
-
-  // =====================================================================
-  //  SECTION 3 — Architecture Pipeline (bottom)
-  // =====================================================================
-  const s3x = 60, s3y = 680;
-
-  elements.push(
-    text(s3x, s3y, "The Meta-Knowledge Architecture", {
-      fontSize: 28,
-      color: "#7048e8",
-      width: 500,
-      height: 35,
-    })
-  );
-
-  const layers = [
-    { label: "1. Query\nUnderstanding", desc: "Extract domain, temporal\nscope, user role, intent", bg: "#e5dbff", stroke: "#7048e8" },
-    { label: "2. Meta-Knowledge\nLayer", desc: "Make applicability\nconditions explicit", bg: "#d0bfff", stroke: "#7048e8" },
-    { label: "3. Disambiguation\n& Routing", desc: "Route to correct\nknowledge bases", bg: "#b197fc", stroke: "#6741d9" },
-    { label: "4. Scoped\nRetrieval", desc: "Search only within\ncompatible docs", bg: "#9775fa", stroke: "#6741d9" },
-    { label: "5. Confidence\n& Validation", desc: "Authority weights,\ndecline if uncertain", bg: "#845ef7", stroke: "#5f3dc4" },
-  ];
-
-  const layerW = 185, layerH = 110, gap = 20;
-
-  layers.forEach((layer, i) => {
-    const lx = s3x + i * (layerW + gap);
-    const ly = s3y + 50;
-
-    elements.push(rect(lx, ly, layerW, layerH, { bg: layer.bg, strokeColor: layer.stroke, fillStyle: "solid" }));
-    elements.push(
-      text(lx + 10, ly + 10, layer.label, {
-        fontSize: 15,
-        color: "#5f3dc4",
-        width: layerW - 20,
-        height: 38,
-      })
-    );
-    elements.push(
-      text(lx + 10, ly + 58, layer.desc, {
-        fontSize: 12,
-        color: "#495057",
-        width: layerW - 20,
-        height: 36,
-      })
-    );
-
-    // Arrows between layers
-    if (i < layers.length - 1) {
-      elements.push(
-        arrow(lx + layerW, ly + layerH / 2, [[0, 0], [gap, 0]], {
-          strokeColor: "#7048e8",
-          strokeWidth: 2,
-        })
-      );
-    }
-  });
-
-  // =====================================================================
-  //  SECTION 4 — Authority Scores (bottom right)
-  // =====================================================================
-  const s4x = 560, s4y = 680;
-
-  elements.push(
-    text(s4x + 80, s4y, "Source Authority Weights", {
-      fontSize: 28,
-      color: "#2f9e44",
-      width: 400,
-      height: 35,
-    })
-  );
-
-  const sources = [
-    { label: "Legal / Compliance", weight: 95, color: "#2f9e44" },
-    { label: "Official Documentation", weight: 82, color: "#1971c2" },
-    { label: "Subject-Matter Expert", weight: 65, color: "#7048e8" },
-    { label: "Community Forum", weight: 30, color: "#f08c00" },
-    { label: "External Blog Post", weight: 15, color: "#e8590c" },
-    { label: "AI-Generated Summary", weight: 8, color: "#e03131" },
-  ];
-
-  const barMaxW = 350;
-
-  sources.forEach((src, i) => {
-    const sy = s4y + 50 + i * 48;
-    // Label
-    elements.push(text(s4x, sy, src.label, { fontSize: 14, color: "#495057", width: 190, height: 18 }));
-    // Bar background
-    elements.push(rect(s4x + 195, sy - 2, barMaxW, 22, { bg: "#f1f3f5", strokeColor: "#dee2e6", fillStyle: "solid" }));
-    // Bar fill
-    const fillW = Math.max(20, (src.weight / 100) * barMaxW);
-    elements.push(rect(s4x + 195, sy - 2, fillW, 22, { bg: src.color, strokeColor: src.color, fillStyle: "solid", opacity: 70 }));
-    // Percentage
-    elements.push(text(s4x + 195 + fillW + 8, sy, `${src.weight}%`, { fontSize: 13, color: src.color, width: 45, height: 18 }));
-  });
-
-  // =====================================================================
-  //  Connecting arrow from Problem → Envelope
-  // =====================================================================
-  elements.push(
-    arrow(490, 350, [[0, 0], [70, 0]], {
-      strokeColor: "#1971c2",
+    ellipse(vx, vy + 50, 500, 400, {
+      bg: "#dbe4ff", strokeColor: "#4263eb", fillStyle: "solid", opacity: 25,
       strokeWidth: 3,
     })
   );
   elements.push(
-    text(495, 328, "needs →", {
-      fontSize: 13,
-      color: "#1971c2",
-      width: 60,
-      height: 18,
+    text(vx + 15, vy + 65, "Semantically Similar", {
+      fontSize: 18, color: "#4263eb", width: 200, height: 24,
+    })
+  );
+
+  // Overlapping dimension circles
+  // Temporal (top-left)
+  elements.push(
+    ellipse(vx + 60, vy + 100, 220, 180, {
+      bg: "#d3f9d8", strokeColor: "#2f9e44", fillStyle: "solid", opacity: 30,
+      strokeWidth: 2,
+    })
+  );
+  elements.push(
+    text(vx + 80, vy + 115, "⏰ Temporally\n     Valid", {
+      fontSize: 15, color: "#2f9e44", width: 130, height: 40,
+    })
+  );
+
+  // Scope (top-right)
+  elements.push(
+    ellipse(vx + 210, vy + 100, 220, 180, {
+      bg: "#fff3bf", strokeColor: "#f08c00", fillStyle: "solid", opacity: 30,
+      strokeWidth: 2,
+    })
+  );
+  elements.push(
+    text(vx + 320, vy + 115, "🎯 Right\n    Scope", {
+      fontSize: 15, color: "#e8590c", width: 100, height: 40,
+    })
+  );
+
+  // Authority (bottom-left)
+  elements.push(
+    ellipse(vx + 60, vy + 230, 220, 180, {
+      bg: "#e5dbff", strokeColor: "#7048e8", fillStyle: "solid", opacity: 30,
+      strokeWidth: 2,
+    })
+  );
+  elements.push(
+    text(vx + 75, vy + 360, "🏛 Authoritative\n      Source", {
+      fontSize: 15, color: "#7048e8", width: 140, height: 40,
+    })
+  );
+
+  // Audience (bottom-right)
+  elements.push(
+    ellipse(vx + 210, vy + 230, 220, 180, {
+      bg: "#ffe3e3", strokeColor: "#e03131", fillStyle: "solid", opacity: 30,
+      strokeWidth: 2,
+    })
+  );
+  elements.push(
+    text(vx + 325, vy + 360, "👤 Right\n    Audience", {
+      fontSize: 15, color: "#e03131", width: 120, height: 40,
+    })
+  );
+
+  // Center intersection — the "Applicable" zone
+  elements.push(
+    ellipse(vx + 175, vy + 220, 140, 100, {
+      bg: "#2f9e44", strokeColor: "#2f9e44", fillStyle: "solid", opacity: 25,
+      strokeWidth: 3,
+    })
+  );
+  elements.push(
+    text(vx + 195, vy + 255, "APPLICABLE", {
+      fontSize: 16, color: "#2f9e44", width: 110, height: 22,
+      textAlign: "center",
+    })
+  );
+
+  // =====================================================================
+  //  SECTION 2 — Compatibility Envelope (right)
+  //  Enhanced: each doc has annotations showing WHY it's in its ring
+  // =====================================================================
+  const ex = 680, ey = 140;
+
+  elements.push(
+    text(ex + 60, ey, "The Compatibility Envelope", {
+      fontSize: 24, color: "#1971c2", width: 380, height: 32,
+    })
+  );
+
+  // Outer ring — red
+  elements.push(
+    ellipse(ex, ey + 50, 480, 440, {
+      bg: "#ffe3e3", strokeColor: "#e03131", fillStyle: "solid", opacity: 30,
+      strokeWidth: 2,
+    })
+  );
+
+  // Middle ring — yellow
+  elements.push(
+    ellipse(ex + 80, ey + 120, 320, 300, {
+      bg: "#fff3bf", strokeColor: "#f08c00", fillStyle: "solid", opacity: 40,
+      strokeWidth: 2,
+    })
+  );
+
+  // Inner ring — green
+  elements.push(
+    ellipse(ex + 155, ey + 190, 170, 160, {
+      bg: "#d3f9d8", strokeColor: "#2f9e44", fillStyle: "solid", opacity: 50,
+      strokeWidth: 2,
+    })
+  );
+
+  // Ring labels (right side, outside)
+  elements.push(
+    text(ex + 485, ey + 100, "True but not\napplicable here", {
+      fontSize: 13, color: "#e03131", width: 120, height: 36,
+    })
+  );
+  elements.push(
+    line(ex + 475, ey + 115, [[0, 0], [10, 0]], { strokeColor: "#e03131" })
+  );
+
+  elements.push(
+    text(ex + 405, ey + 220, "Partially\napplicable", {
+      fontSize: 13, color: "#e8590c", width: 85, height: 36,
+    })
+  );
+  elements.push(
+    line(ex + 395, ey + 235, [[0, 0], [10, 0]], { strokeColor: "#e8590c" })
+  );
+
+  elements.push(
+    text(ex + 330, ey + 255, "Fully\napplicable", {
+      fontSize: 13, color: "#2f9e44", width: 80, height: 36,
+    })
+  );
+  elements.push(
+    line(ex + 320, ey + 270, [[0, 0], [10, 0]], { strokeColor: "#2f9e44" })
+  );
+
+  // ── Documents with dimension indicators ──
+
+  // INNER: Enterprise SLA ✓✓✓✓
+  const docG = (x, y, label, dims) => {
+    elements.push(rect(x, y, 140, 50, { bg: "#b2f2bb", strokeColor: "#2f9e44", fillStyle: "solid" }));
+    elements.push(text(x + 8, y + 5, label, { fontSize: 12, color: "#2b8a3e", width: 125, height: 16 }));
+    elements.push(text(x + 8, y + 26, dims, { fontSize: 11, color: "#495057", width: 125, height: 16 }));
+  };
+  docG(ex + 170, ey + 215, "Enterprise SLA", "⏰✓  🎯✓  🏛✓  👤✓");
+  docG(ex + 170, ey + 300, "Q1 2026 Pricing", "⏰✓  🎯✓  🏛✓  👤✓");
+
+  // MIDDLE: Partially applicable — show which dimension fails
+  const docY = (x, y, label, dims, fail) => {
+    elements.push(rect(x, y, 140, 60, { bg: "#ffec99", strokeColor: "#f08c00", fillStyle: "solid" }));
+    elements.push(text(x + 8, y + 5, label, { fontSize: 12, color: "#e8590c", width: 125, height: 16 }));
+    elements.push(text(x + 8, y + 24, dims, { fontSize: 11, color: "#495057", width: 125, height: 16 }));
+    elements.push(text(x + 8, y + 42, fail, { fontSize: 10, color: "#e8590c", width: 125, height: 14 }));
+  };
+  docY(ex + 90, ey + 155, "2024 Annual Report", "⏰✗  🎯✓  🏛✓  👤✓", "↑ outdated data");
+  docY(ex + 280, ey + 340, "Beta Feature Docs", "⏰✓  🎯✗  🏛✓  👤✓", "↑ scope mismatch");
+
+  // OUTER: Not applicable — show multiple failures
+  const docR = (x, y, label, dims, fail) => {
+    elements.push(rect(x, y, 145, 60, { bg: "#ffc9c9", strokeColor: "#e03131", fillStyle: "solid" }));
+    elements.push(text(x + 8, y + 5, label, { fontSize: 12, color: "#c92a2a", width: 130, height: 16 }));
+    elements.push(text(x + 8, y + 24, dims, { fontSize: 11, color: "#495057", width: 130, height: 16 }));
+    elements.push(text(x + 8, y + 42, fail, { fontSize: 10, color: "#e03131", width: 130, height: 14 }));
+  };
+  docR(ex + 10, ey + 380, "Consumer FAQ", "⏰✓  🎯✗  🏛✗  👤✗", "wrong audience + scope");
+  docR(ex + 330, ey + 95, "Competitor Analysis", "⏰✓  🎯✗  🏛✗  👤✗", "external, wrong scope");
+  docR(ex + 330, ey + 420, "Industry Blog Post", "⏰✗  🎯✗  🏛✗  👤✗", "fails all dimensions");
+
+  // =====================================================================
+  //  SECTION 3 — Concrete Example: The Dangerous Retrieval
+  //  Visual flow showing similarity score vs. applicability
+  // =====================================================================
+  const fx = 80, fy = 620;
+
+  elements.push(
+    text(fx + 100, fy, "The Dangerous Retrieval", {
+      fontSize: 24, color: "#e03131", width: 350, height: 32,
+    })
+  );
+
+  // Query bubble
+  elements.push(
+    ellipse(fx, fy + 55, 260, 70, {
+      bg: "#e7f5ff", strokeColor: "#1971c2", fillStyle: "solid",
+    })
+  );
+  elements.push(
+    text(fx + 30, fy + 72, '"What is our return\n         policy?"', {
+      fontSize: 16, color: "#1971c2", width: 200, height: 40,
+      textAlign: "center",
+    })
+  );
+  elements.push(
+    text(fx + 50, fy + 125, "Context: Enterprise B2B", {
+      fontSize: 12, color: "#4dabf7", width: 170, height: 16,
+    })
+  );
+
+  // Arrow to similarity ranking
+  elements.push(
+    arrow(fx + 260, fy + 90, [[0, 0], [60, 0]], { strokeColor: "#868e96", strokeWidth: 2 })
+  );
+
+  // Similarity ranking column
+  const rankX = fx + 340, rankY = fy + 45;
+  elements.push(
+    text(rankX + 5, rankY, "Vector Ranking", {
+      fontSize: 14, color: "#868e96", width: 130, height: 18,
+    })
+  );
+
+  // Rank 1 — high similarity, WRONG
+  elements.push(rect(rankX, rankY + 25, 160, 40, { bg: "#fff5f5", strokeColor: "#e03131", fillStyle: "solid" }));
+  elements.push(text(rankX + 8, rankY + 30, "#1  Consumer Policy", { fontSize: 12, color: "#e03131", width: 145, height: 16 }));
+  elements.push(text(rankX + 8, rankY + 47, "cos 0.95", { fontSize: 11, color: "#868e96", width: 60, height: 14 }));
+  // Big X
+  elements.push(text(rankX + 165, rankY + 30, "✗", { fontSize: 24, color: "#e03131", width: 25, height: 30 }));
+
+  // Rank 2 — high similarity, WRONG
+  elements.push(rect(rankX, rankY + 72, 160, 40, { bg: "#fff5f5", strokeColor: "#e03131", fillStyle: "solid" }));
+  elements.push(text(rankX + 8, rankY + 77, "#2  General FAQ", { fontSize: 12, color: "#e03131", width: 145, height: 16 }));
+  elements.push(text(rankX + 8, rankY + 94, "cos 0.91", { fontSize: 11, color: "#868e96", width: 60, height: 14 }));
+  elements.push(text(rankX + 165, rankY + 77, "✗", { fontSize: 24, color: "#e03131", width: 25, height: 30 }));
+
+  // Rank 3 — lower similarity, CORRECT
+  elements.push(rect(rankX, rankY + 119, 160, 40, { bg: "#ebfbee", strokeColor: "#2f9e44", fillStyle: "solid" }));
+  elements.push(text(rankX + 8, rankY + 124, "#3  Enterprise SLA", { fontSize: 12, color: "#2f9e44", width: 145, height: 16 }));
+  elements.push(text(rankX + 8, rankY + 141, "cos 0.82", { fontSize: 11, color: "#868e96", width: 60, height: 14 }));
+  elements.push(text(rankX + 165, rankY + 124, "✓", { fontSize: 24, color: "#2f9e44", width: 25, height: 30 }));
+
+  // Arrow to applicability filter
+  elements.push(
+    arrow(rankX + 200, rankY + 85, [[0, 0], [50, 0]], { strokeColor: "#1971c2", strokeWidth: 2 })
+  );
+
+  // Applicability filter — diamond gate
+  const gateX = rankX + 260, gateY = rankY + 45;
+  elements.push(
+    diamond(gateX, gateY, 110, 110, {
+      bg: "#d3f9d8", strokeColor: "#2f9e44", fillStyle: "solid", opacity: 60,
+      strokeWidth: 3,
+    })
+  );
+  elements.push(
+    text(gateX + 18, gateY + 36, "Applicability\n    Filter", {
+      fontSize: 13, color: "#2f9e44", width: 90, height: 36,
+      textAlign: "center",
+    })
+  );
+
+  // Arrow from filter — blocked docs go up (red)
+  elements.push(
+    arrow(gateX + 55, gateY, [[0, 0], [0, -35]], { strokeColor: "#e03131", strokeWidth: 2 })
+  );
+  elements.push(
+    text(gateX + 65, gateY - 40, "blocked", {
+      fontSize: 11, color: "#e03131", width: 55, height: 14,
+    })
+  );
+
+  // Arrow from filter — correct doc goes right (green)
+  elements.push(
+    arrow(gateX + 110, gateY + 55, [[0, 0], [50, 0]], { strokeColor: "#2f9e44", strokeWidth: 3 })
+  );
+
+  // Correct result
+  elements.push(
+    rect(gateX + 170, gateY + 25, 170, 65, {
+      bg: "#ebfbee", strokeColor: "#2f9e44", fillStyle: "solid", strokeWidth: 3,
+    })
+  );
+  elements.push(
+    text(gateX + 185, gateY + 33, "Enterprise SLA", {
+      fontSize: 16, color: "#2f9e44", width: 145, height: 22,
+    })
+  );
+  elements.push(
+    text(gateX + 185, gateY + 55, "90-day return window\nDedicated account mgr", {
+      fontSize: 11, color: "#495057", width: 145, height: 30,
+    })
+  );
+
+  // =====================================================================
+  //  SECTION 4 — Dimension Breakdown Grid
+  //  Visual grid showing 3 docs × 4 dimensions with ✓/✗ icons
+  // =====================================================================
+  const gx = 680, gy = 620;
+
+  elements.push(
+    text(gx + 40, gy, "Applicability Dimensions", {
+      fontSize: 24, color: "#7048e8", width: 350, height: 32,
+    })
+  );
+
+  // Column headers (dimensions)
+  const dims = [
+    { label: "⏰ Time", color: "#2f9e44" },
+    { label: "🎯 Scope", color: "#f08c00" },
+    { label: "🏛 Authority", color: "#7048e8" },
+    { label: "👤 Audience", color: "#e03131" },
+  ];
+  const colW = 80, rowH = 55;
+  const gridX = gx + 160, gridY = gy + 50;
+
+  dims.forEach((d, i) => {
+    elements.push(
+      text(gridX + i * colW, gridY, d.label, {
+        fontSize: 13, color: d.color, width: 75, height: 18, textAlign: "center",
+      })
+    );
+  });
+
+  // Horizontal separator
+  elements.push(line(gx, gridY + 22, [[0, 0], [490, 0]], { strokeColor: "#dee2e6", strokeWidth: 1 }));
+
+  // Row data
+  const docs = [
+    {
+      name: "Enterprise SLA",
+      bg: "#ebfbee", color: "#2f9e44",
+      dims: ["✓", "✓", "✓", "✓"],
+      verdict: "APPLICABLE",
+    },
+    {
+      name: "Consumer Policy",
+      bg: "#fff5f5", color: "#e03131",
+      dims: ["✓", "✗", "✗", "✗"],
+      verdict: "WRONG",
+    },
+    {
+      name: "2024 Report",
+      bg: "#fff9db", color: "#e8590c",
+      dims: ["✗", "✓", "✓", "✓"],
+      verdict: "PARTIAL",
+    },
+  ];
+
+  docs.forEach((doc, ri) => {
+    const ry = gridY + 30 + ri * rowH;
+
+    // Doc name + bg row
+    elements.push(
+      rect(gx, ry, 490, rowH - 5, {
+        bg: doc.bg, strokeColor: "transparent", fillStyle: "solid", opacity: 40,
+      })
+    );
+    elements.push(
+      text(gx + 8, ry + 10, doc.name, {
+        fontSize: 14, color: doc.color, width: 140, height: 18,
+      })
+    );
+
+    // Dimension check/cross marks
+    doc.dims.forEach((mark, ci) => {
+      const isPass = mark === "✓";
+      elements.push(
+        ellipse(gridX + ci * colW + 18, ry + 5, 36, 36, {
+          bg: isPass ? "#d3f9d8" : "#ffe3e3",
+          strokeColor: isPass ? "#2f9e44" : "#e03131",
+          fillStyle: "solid",
+          opacity: 50,
+        })
+      );
+      elements.push(
+        text(gridX + ci * colW + 26, ry + 10, mark, {
+          fontSize: 20, color: isPass ? "#2f9e44" : "#e03131", width: 20, height: 26,
+        })
+      );
+    });
+
+    // Verdict
+    elements.push(
+      text(gridX + 4 * colW + 10, ry + 10, doc.verdict, {
+        fontSize: 13, color: doc.color, width: 90, height: 18,
+      })
+    );
+  });
+
+  // =====================================================================
+  //  Connecting elements
+  // =====================================================================
+
+  // Arrow: Venn → Envelope ("defines the")
+  elements.push(
+    arrow(580, 340, [[0, 0], [100, 0]], { strokeColor: "#1971c2", strokeWidth: 2 })
+  );
+  elements.push(
+    text(590, 318, "defines the", {
+      fontSize: 12, color: "#1971c2", width: 85, height: 16,
+    })
+  );
+
+  // Arrow: Envelope → Grid ("evaluated per doc")
+  elements.push(
+    arrow(920, 590, [[0, 0], [0, 30]], { strokeColor: "#7048e8", strokeWidth: 2 })
+  );
+  elements.push(
+    text(928, 598, "evaluated per document", {
+      fontSize: 11, color: "#7048e8", width: 160, height: 14,
     })
   );
 
