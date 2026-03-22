@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "@excalidraw/excalidraw/index.css";
 import { buildScene } from "./scene";
 
 function App() {
