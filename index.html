@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Needs a Meta-Knowledge Layer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0e1a;
+    color: #e0e6f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 48px 24px 24px;
+  }
+  header h1 {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-weight: 700;
+    background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.3;
+  }
+  header p {
+    margin-top: 12px;
+    color: #8896b3;
+    font-size: 1.05rem;
+    max-width: 640px;
+    margin-inline: auto;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 24px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    color: #8896b3;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .95rem;
+    transition: all .25s;
+  }
+  .tab-btn:hover { background: rgba(255,255,255,.1); color: #c5d0e6; }
+  .tab-btn.active {
+    background: linear-gradient(135deg, rgba(110,231,183,.15), rgba(59,130,246,.15));
+    border-color: #6ee7b7;
+    color: #6ee7b7;
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 24px; max-width: 1100px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* ── Section: The Problem ── */
+  .demo-box {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .demo-box h2 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    color: #c5d0e6;
+  }
+
+  /* Query demo */
+  .query-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .query-input-row select, .query-input-row button {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.06);
+    color: #e0e6f0;
+    font-size: .95rem;
+    cursor: pointer;
+  }
+  .query-input-row button {
+    background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+    color: #0a0e1a;
+    font-weight: 600;
+    border: none;
+    min-width: 120px;
+  }
+  .query-input-row button:hover { opacity: .9; }
+
+  .result-cards {
+    display: grid;
+    gap: 16px;
+  }
+  .result-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all .4s;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .tag-relevant { background: rgba(59,130,246,.2); color: #60a5fa; }
+  .tag-true     { background: rgba(110,231,183,.2); color: #6ee7b7; }
+  .tag-wrong    { background: rgba(248,113,113,.2); color: #f87171; }
+  .tag-applicable { background: rgba(168,85,247,.2); color: #c084fc; }
+  .result-card h3 { font-size: 1rem; margin-bottom: 6px; }
+  .result-card p  { font-size: .9rem; color: #8896b3; line-height: 1.5; }
+
+  .verdict {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: .95rem;
+    line-height: 1.5;
+    display: none;
+  }
+  .verdict.show { display: block; }
+  .verdict-bad  { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25); }
+  .verdict-good { background: rgba(110,231,183,.1); border: 1px solid rgba(110,231,183,.25); }
+
+  /* ── Section: Architecture ── */
+  .arch-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+  }
+  .arch-layer {
+    width: 100%;
+    max-width: 720px;
+    padding: 24px 28px;
+    border-radius: 14px;
+    position: relative;
+    transition: all .4s;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .arch-layer:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255,255,255,.12);
+  }
+  .arch-layer.highlighted {
+    border-color: #6ee7b7;
+    box-shadow: 0 0 24px rgba(110,231,183,.12);
+  }
+  .arch-layer h3 {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .arch-layer h3 .icon { font-size: 1.3rem; }
+  .arch-layer p { font-size: .88rem; color: #8896b3; line-height: 1.5; }
+  .arch-layer .detail {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .4s ease, margin .3s;
+    font-size: .85rem;
+    color: #a0aec0;
+    line-height: 1.6;
+  }
+  .arch-layer.expanded .detail { max-height: 300px; margin-top: 12px; }
+
+  .layer-query    { background: rgba(59,130,246,.08); }
+  .layer-meta     { background: rgba(110,231,183,.08); }
+  .layer-route    { background: rgba(168,85,247,.08); }
+  .layer-retrieve { background: rgba(251,191,36,.08); }
+  .layer-validate { background: rgba(248,113,113,.08); }
+
+  .arrow-down {
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(to bottom, rgba(255,255,255,.15), rgba(255,255,255,.05));
+    position: relative;
+  }
+  .arrow-down::after {
+    content: '▾';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,.25);
+    font-size: .8rem;
+  }
+
+  /* ── Section: Envelope ── */
+  .envelope-viz {
+    position: relative;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .envelope-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px dashed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .5s;
+  }
+  .ring-outer {
+    width: 380px; height: 380px;
+    border-color: rgba(248,113,113,.3);
+  }
+  .ring-mid {
+    width: 260px; height: 260px;
+    border-color: rgba(251,191,36,.3);
+  }
+  .ring-inner {
+    width: 140px; height: 140px;
+    border-color: rgba(110,231,183,.5);
+    background: rgba(110,231,183,.05);
+  }
+  .ring-label {
+    position: absolute;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+  .ring-outer > .ring-label { top: -12px; background: rgba(248,113,113,.15); color: #f87171; }
+  .ring-mid   > .ring-label { top: -12px; background: rgba(251,191,36,.15);  color: #fbbf24; }
+  .ring-inner > .ring-label { top: -12px; background: rgba(110,231,183,.15); color: #6ee7b7; }
+
+  .envelope-core {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+  .envelope-core strong { font-size: 1rem; display: block; margin-bottom: 4px; }
+  .envelope-core span   { font-size: .8rem; color: #8896b3; }
+
+  .floating-doc {
+    position: absolute;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all .4s;
+    z-index: 3;
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  .floating-doc:hover { transform: scale(1.2); }
+  .floating-doc.doc-in  { background: rgba(110,231,183,.15); }
+  .floating-doc.doc-mid { background: rgba(251,191,36,.15); }
+  .floating-doc.doc-out { background: rgba(248,113,113,.15); }
+
+  .doc-tooltip {
+    position: absolute;
+    background: #1a1f35;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: .82rem;
+    max-width: 240px;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s;
+    line-height: 1.5;
+    box-shadow: 0 8px 30px rgba(0,0,0,.4);
+  }
+  .doc-tooltip.show { opacity: 1; }
+
+  /* ── Section: Authority ── */
+  .authority-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .auth-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all .35s;
+    position: relative;
+  }
+  .auth-card:hover { border-color: rgba(255,255,255,.18); }
+  .auth-card .score-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.06);
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .auth-card .score-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+    width: 0;
+  }
+  .auth-card .auth-label { font-size: .75rem; color: #8896b3; margin-top: 6px; }
+  .auth-card h3 { font-size: .95rem; margin-bottom: 4px; }
+  .auth-card p  { font-size: .82rem; color: #8896b3; line-height: 1.4; }
+  .auth-card .auth-icon { font-size: 1.5rem; margin-bottom: 8px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .ring-outer { width: 300px; height: 300px; }
+    .ring-mid   { width: 200px; height: 200px; }
+    .ring-inner { width: 110px; height: 110px; }
+    .demo-box { padding: 20px; }
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fadeUp .5s ease forwards; }
+
+  @keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(110,231,183,.15); }
+    50%      { box-shadow: 0 0 0 12px rgba(110,231,183,0); }
+  }
+  .ring-inner { animation: pulse-ring 3s ease infinite; }
+
+  /* caption */
+  .caption {
+    text-align: center;
+    font-size: .85rem;
+    color: #667;
+    margin-top: 20px;
+  }
+  .caption a { color: #6ee7b7; text-decoration: none; }
+  .caption a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Knowledge Needs a Meta-Knowledge Layer</h1>
+  <p>RAG can retrieve true, relevant content — and still get the answer wrong. Here's why knowledge systems need an extra layer that understands <em>when</em> knowledge applies.</p>
+</header>
+
+<!-- Tabs -->
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="problem">The Problem</button>
+  <button class="tab-btn" data-tab="envelope">Compatibility Envelope</button>
+  <button class="tab-btn" data-tab="architecture">Architecture</button>
+  <button class="tab-btn" data-tab="authority">Authority Matters</button>
+</nav>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- Panel 1: The Problem                        -->
+<!-- ════════════════════════════════════════════ -->
+<section class="panel active" id="panel-problem">
+  <div class="demo-box">
+    <h2>True, Relevant, and Wrong</h2>
+    <p style="color:#8896b3;margin-bottom:18px;">Standard RAG retrieves chunks by semantic similarity — but similarity ≠ applicability. Choose a query and see what happens.</p>
+
+    <div class="query-input-row">
+      <select id="querySelect">
+        <option value="0">What is the return policy for enterprise customers?</option>
+        <option value="1">What dosage of ibuprofen should I take?</option>
+        <option value="2">What are the tax rates for my business?</option>
+      </select>
+      <button id="runQuery">Retrieve →</button>
+    </div>
+
+    <div class="result-cards" id="resultCards"></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- Panel 2: Compatibility Envelope             -->
+<!-- ════════════════════════════════════════════ -->
+<section class="panel" id="panel-envelope">
+  <div class="demo-box">
+    <h2>The Compatibility Envelope</h2>
+    <p style="color:#8896b3;margin-bottom:24px;">Every piece of knowledge has conditions that determine when it applies — temporal validity, scope, prerequisites. Outside the envelope, a document is a <strong style="color:#f87171">disallowed truth</strong>. Hover over the documents to explore.</p>
+
+    <div class="envelope-viz" id="envelopeViz">
+      <div class="envelope-ring ring-outer">
+        <span class="ring-label">Outside scope — disallowed truths</span>
+        <div class="envelope-ring ring-mid">
+          <span class="ring-label">Partially applicable</span>
+          <div class="envelope-ring ring-inner">
+            <span class="ring-label">Fully applicable</span>
+            <div class="envelope-core">
+              <strong>Your Query</strong>
+              <span>Context-bound</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- floating docs injected by JS -->
+    </div>
+    <div class="doc-tooltip" id="docTooltip"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- Panel 3: Architecture                       -->
+<!-- ════════════════════════════════════════════ -->
+<section class="panel" id="panel-architecture">
+  <div class="demo-box">
+    <h2>End-to-End Meta-Knowledge Architecture</h2>
+    <p style="color:#8896b3;margin-bottom:24px;">Click each layer to expand details.</p>
+
+    <div class="arch-flow">
+      <div class="arch-layer layer-query" data-layer="query">
+        <h3><span class="icon">🔍</span> Query Understanding</h3>
+        <p>Extract signals — domain, temporal scope, user role, intent.</p>
+        <div class="detail">The system extracts structured signals from the raw query: what domain does this belong to? What time period matters? What role/permissions does the user have? These signals become the routing key for everything downstream.</div>
+      </div>
+      <div class="arrow-down"></div>
+
+      <div class="arch-layer layer-meta" data-layer="meta">
+        <h3><span class="icon">🧠</span> Meta-Knowledge Layer</h3>
+        <p>Make implicit applicability conditions explicit and machine-readable.</p>
+        <div class="detail">Every chunk of knowledge carries implicit properties: temporal validity (is this still current?), scope conditions (which regions/products/user-types does this cover?), and prerequisites (what must be true for this to apply?). The meta-knowledge layer makes these explicit so the system can reason about them programmatically.</div>
+      </div>
+      <div class="arrow-down"></div>
+
+      <div class="arch-layer layer-route" data-layer="route">
+        <h3><span class="icon">🔀</span> Disambiguation &amp; Routing</h3>
+        <p>Route queries to the correct knowledge bases and specialized agents.</p>
+        <div class="detail">Disambiguation is the agentic layer that takes extracted signals and routes the query to the correct assistant or knowledge base — selecting which sources are in scope. This is where the architecture becomes multi-agent: the challenge shifts from understanding the query to orchestrating a response across specialized knowledge domains.</div>
+      </div>
+      <div class="arrow-down"></div>
+
+      <div class="arch-layer layer-retrieve" data-layer="retrieve">
+        <h3><span class="icon">📦</span> Scoped Retrieval</h3>
+        <p>Search within the compatibility envelope — not the entire index.</p>
+        <div class="detail">Instead of searching the full vector space, retrieval is scoped to only the knowledge bases and chunks that pass the meta-knowledge filter. This eliminates "disallowed truths" — documents that are semantically similar but don't govern the user's case — before they ever reach the LLM.</div>
+      </div>
+      <div class="arrow-down"></div>
+
+      <div class="arch-layer layer-validate" data-layer="validate">
+        <h3><span class="icon">✅</span> Confidence &amp; Validation</h3>
+        <p>Apply authority weights and confidence thresholds before answering.</p>
+        <div class="detail">Not all documents carry equal weight. Authority depends on who created the document, in what capacity, and with what organizational standing. The validation layer applies confidence thresholds — if no retrieved chunk passes both the applicability and authority bar, the system declines to answer rather than hallucinate.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- Panel 4: Authority Matters                  -->
+<!-- ════════════════════════════════════════════ -->
+<section class="panel" id="panel-authority">
+  <div class="demo-box">
+    <h2>Authority Is Not Flat</h2>
+    <p style="color:#8896b3;margin-bottom:20px;">Standard retrieval treats every chunk as an equally weighted string of text. But authority depends on who created the document, in what capacity, and with what organizational standing.</p>
+
+    <div class="authority-grid" id="authGrid">
+      <!-- populated by JS -->
+    </div>
+  </div>
+</section>
+
+<p class="caption">Interactive companion to <a href="https://www.pinecone.io/learn/series/beyond-retrieval/knowledge-needs-meta-knowledge/" target="_blank">Knowledge Needs a Meta-Knowledge Layer</a> · Pinecone Beyond Retrieval series</p>
+
+<script>
+/* ── Tab switching ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById('panel-' + btn.dataset.tab);
+    panel.classList.add('active');
+    panel.querySelectorAll('.animate-in').forEach(el => {
+      el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+    });
+    // trigger authority bars
+    if (btn.dataset.tab === 'authority') animateAuthBars();
+  });
+});
+
+/* ── Panel 1: The Problem (query demo) ── */
+const scenarios = [
+  {
+    query: "What is the return policy for enterprise customers?",
+    results: [
+      { title: "Consumer Return Policy (2024)", text: "Customers may return items within 30 days for a full refund. Items must be unused and in original packaging.", tags: ["Relevant","True","Wrong"], tagClasses: ["tag-relevant","tag-true","tag-wrong"], applicable: false },
+      { title: "Enterprise SLA Addendum v3.2", text: "Enterprise accounts are governed by custom service-level agreements. Return and cancellation terms are defined per-contract.", tags: ["Relevant","True","Applicable"], tagClasses: ["tag-relevant","tag-true","tag-applicable"], applicable: true },
+      { title: "Retail Store Returns FAQ", text: "Visit any store with your receipt within 14 days for exchanges or store credit.", tags: ["Relevant","True","Wrong"], tagClasses: ["tag-relevant","tag-true","tag-wrong"], applicable: false },
+    ],
+    bad: "Without meta-knowledge, a naive RAG system would rank the Consumer Return Policy highest (best semantic match for \"return policy\") — giving the user a <strong>true, relevant, and completely wrong</strong> answer for their enterprise context.",
+    good: "A meta-knowledge layer recognizes the user's <em>enterprise</em> role, filters by customer-type scope, and surfaces only the Enterprise SLA Addendum — the one document that actually governs their case."
+  },
+  {
+    query: "What dosage of ibuprofen should I take?",
+    results: [
+      { title: "Adult OTC Ibuprofen Guidelines", text: "Adults: 200–400 mg every 4–6 hours as needed. Do not exceed 1200 mg in 24 hours without physician guidance.", tags: ["Relevant","True","Wrong"], tagClasses: ["tag-relevant","tag-true","tag-wrong"], applicable: false },
+      { title: "Pediatric Dosing Chart (Updated 2025)", text: "Dosing for children is weight-based: 5–10 mg/kg every 6–8 hours. Consult a pediatrician for children under 6 months.", tags: ["Relevant","True","Wrong"], tagClasses: ["tag-relevant","tag-true","tag-wrong"], applicable: false },
+      { title: "Patient-Specific Rx: #44291", text: "Based on your renal function and current medications, your prescribed dose is 400 mg every 8 hours with food. Do not combine with aspirin.", tags: ["Relevant","True","Applicable"], tagClasses: ["tag-relevant","tag-true","tag-applicable"], applicable: true },
+    ],
+    bad: "Standard retrieval ranks the OTC guidelines first — a factual, relevant answer that could be <strong>dangerous</strong> if the patient has conditions requiring a different dosage.",
+    good: "The meta-knowledge layer checks patient context (renal function, drug interactions) and routes to the patient-specific prescription — the only source within the <em>compatibility envelope</em>."
+  },
+  {
+    query: "What are the tax rates for my business?",
+    results: [
+      { title: "US Federal Corporate Tax Rates 2024", text: "The federal corporate income tax rate is a flat 21% on taxable income for C-corporations.", tags: ["Relevant","True","Wrong"], tagClasses: ["tag-relevant","tag-true","tag-wrong"], applicable: false },
+      { title: "California State Tax Guide for LLCs", text: "California LLCs are subject to an $800 annual franchise tax, plus an LLC fee based on total income.", tags: ["Relevant","True","Wrong"], tagClasses: ["tag-relevant","tag-true","tag-wrong"], applicable: false },
+      { title: "Your Tax Profile: Texas S-Corp", text: "As a Texas-registered S-Corporation, you have no state income tax. Federal pass-through rate applies based on individual brackets. Estimated quarterly payments due.", tags: ["Relevant","True","Applicable"], tagClasses: ["tag-relevant","tag-true","tag-applicable"], applicable: true },
+    ],
+    bad: "A naive system returns California LLC tax info (strong semantic match for \"business tax rates\") — <strong>factually correct but completely wrong</strong> for a Texas S-Corp.",
+    good: "Meta-knowledge filters by entity type (S-Corp), jurisdiction (Texas), and temporal validity (current tax year) to surface only the user's actual tax profile."
+  }
+];
+
+const resultCards = document.getElementById('resultCards');
+const verdictEl = document.getElementById('verdict');
+
+document.getElementById('runQuery').addEventListener('click', () => {
+  const idx = +document.getElementById('querySelect').value;
+  const s = scenarios[idx];
+
+  resultCards.innerHTML = '';
+  verdictEl.className = 'verdict';
+  verdictEl.innerHTML = '';
+
+  s.results.forEach((r, i) => {
+    setTimeout(() => {
+      const card = document.createElement('div');
+      card.className = 'result-card animate-in';
+      if (r.applicable) card.style.borderColor = 'rgba(110,231,183,.3)';
+      card.innerHTML = `
+        <div>${r.tags.map((t,j) => `<span class="tag ${r.tagClasses[j]}">${t}</span> `).join('')}</div>
+        <h3>${r.title}</h3>
+        <p>${r.text}</p>
+      `;
+      resultCards.appendChild(card);
+    }, i * 250);
+  });
+
+  setTimeout(() => {
+    verdictEl.innerHTML = `
+      <div style="margin-bottom:12px"><strong style="color:#f87171">⚠ Without meta-knowledge:</strong> ${s.bad}</div>
+      <div><strong style="color:#6ee7b7">✓ With meta-knowledge:</strong> ${s.good}</div>
+    `;
+    verdictEl.className = 'verdict show verdict-bad animate-in';
+  }, s.results.length * 250 + 200);
+});
+
+// auto-run first query
+document.getElementById('runQuery').click();
+
+/* ── Panel 2: Compatibility Envelope ── */
+const envelopeDocs = [
+  { emoji: "📄", cls: "doc-in",  x: 0,   y: -10, tip: "<strong>Current Enterprise SLA</strong><br>Temporal: valid today<br>Scope: enterprise tier<br>Authority: legal team<br><em style='color:#6ee7b7'>→ Fully applicable</em>" },
+  { emoji: "📋", cls: "doc-in",  x: 25,  y: 20,  tip: "<strong>Q1 2026 Pricing Sheet</strong><br>Temporal: this quarter<br>Scope: all tiers<br>Authority: finance<br><em style='color:#6ee7b7'>→ Fully applicable</em>" },
+  { emoji: "📊", cls: "doc-mid", x: -52, y: -40, tip: "<strong>2024 Annual Report</strong><br>Temporal: outdated<br>Scope: matches<br>Authority: official<br><em style='color:#fbbf24'>→ Partially applicable (stale data)</em>" },
+  { emoji: "📑", cls: "doc-mid", x: 55,  y: -50, tip: "<strong>Beta Feature Docs</strong><br>Temporal: current<br>Scope: beta users only<br>Authority: engineering<br><em style='color:#fbbf24'>→ Partially applicable (scope mismatch)</em>" },
+  { emoji: "📝", cls: "doc-out", x: -80, y: 15,  tip: "<strong>Consumer FAQ (Archived)</strong><br>Temporal: deprecated<br>Scope: consumer tier<br>Authority: support team<br><em style='color:#f87171'>→ Disallowed truth</em>" },
+  { emoji: "🗂️", cls: "doc-out", x: 80,  y: 50,  tip: "<strong>Competitor Analysis</strong><br>Temporal: current<br>Scope: internal only<br>Authority: marketing<br><em style='color:#f87171'>→ Disallowed truth</em>" },
+  { emoji: "📰", cls: "doc-out", x: -70, y: 70,  tip: "<strong>Industry Blog Post</strong><br>Temporal: current<br>Scope: general<br>Authority: third-party<br><em style='color:#f87171'>→ Disallowed truth</em>" },
+];
+
+const envViz = document.getElementById('envelopeViz');
+const tooltip = document.getElementById('docTooltip');
+
+envelopeDocs.forEach(d => {
+  const el = document.createElement('div');
+  el.className = `floating-doc ${d.cls}`;
+  el.textContent = d.emoji;
+  el.style.left  = `calc(50% + ${d.x}px)`;
+  el.style.top   = `calc(50% + ${d.y}px)`;
+  el.addEventListener('mouseenter', e => {
+    tooltip.innerHTML = d.tip;
+    tooltip.style.left = (e.clientX + 16) + 'px';
+    tooltip.style.top  = (e.clientY - 10) + 'px';
+    tooltip.classList.add('show');
+  });
+  el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+  envViz.appendChild(el);
+});
+
+/* ── Panel 3: Architecture (expand layers) ── */
+document.querySelectorAll('.arch-layer').forEach(layer => {
+  layer.addEventListener('click', () => {
+    const wasExpanded = layer.classList.contains('expanded');
+    document.querySelectorAll('.arch-layer').forEach(l => l.classList.remove('expanded','highlighted'));
+    if (!wasExpanded) {
+      layer.classList.add('expanded','highlighted');
+    }
+  });
+});
+
+/* ── Panel 4: Authority ── */
+const authorities = [
+  { icon: "⚖️", title: "Legal / Compliance", desc: "Reviewed, approved, and binding. Highest organizational authority.", score: 95, color: "#6ee7b7" },
+  { icon: "🏛️", title: "Official Documentation", desc: "Authored by the product or engineering team. Versioned and maintained.", score: 82, color: "#60a5fa" },
+  { icon: "👤", title: "Subject-Matter Expert", desc: "Written by a domain expert. High quality but not formally reviewed.", score: 65, color: "#c084fc" },
+  { icon: "💬", title: "Community / Forum", desc: "User-generated content. May be accurate but unverified.", score: 30, color: "#fbbf24" },
+  { icon: "📰", title: "External Blog Post", desc: "Third-party content. No organizational endorsement.", score: 15, color: "#f87171" },
+  { icon: "🤖", title: "AI-Generated Summary", desc: "Synthesized by an LLM. No provenance chain.", score: 8, color: "#f87171" },
+];
+
+const authGrid = document.getElementById('authGrid');
+authorities.forEach(a => {
+  const card = document.createElement('div');
+  card.className = 'auth-card';
+  card.innerHTML = `
+    <div class="auth-icon">${a.icon}</div>
+    <h3>${a.title}</h3>
+    <p>${a.desc}</p>
+    <div class="score-bar"><div class="score-fill" data-score="${a.score}" style="background:${a.color}"></div></div>
+    <div class="auth-label">Authority weight: ${a.score}%</div>
+  `;
+  authGrid.appendChild(card);
+});
+
+function animateAuthBars() {
+  setTimeout(() => {
+    document.querySelectorAll('.score-fill').forEach(bar => {
+      bar.style.width = bar.dataset.score + '%';
+    });
+  }, 100);
+}
+</script>
+</body>
+</html>
